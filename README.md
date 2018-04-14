@@ -1,5 +1,3 @@
-# GWpcor
-A R function for geographically weighted partial correlation analysis
-
-citation: Percival J. and Tsutsumida N. Geographically weighted partial correlation for spatial analysis, GI_forum Journal. (Accepted)
-
+# Geographically weighted partial correlation
+The gwpcor function implements a geographically weighted partial correlation.
+This is an addon function of GW model.

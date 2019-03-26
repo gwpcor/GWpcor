@@ -8,17 +8,18 @@ Geographically weighted partial correlation
 This function calculates the geographically weighted partial correlations between two variables given others. The function is designed from gwss function from the GWmodel package, and the cor2pcor function from the corpcor package.
 }
 \usage{
-gwpcor(sdata, summary.locat, vars, method = c("pearson", "spearman"), kernel = "bisquare", adaptive = FALSE, bw, p = 2, theta = 0, longlat = F, dMat)
+gwpcor(sdata, summary.locat, vars, method = c("pearson", "spearman"), kernel = "bisquare", adaptive = FALSE, bw, p = 2, theta = 0, longlat = F, dMat,  foreach = F)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{sdata}{
-a Spatial*DataFrame, i.e. SpatialPointsDataFrame or SpatialPolygonsDataFrame as defined in package sp
+a Spatial*DataFrame (i.e. SpatialPointsDataFrame or SpatialPolygonsDataFrame as defined in package sp),
+or a sf object 
 
 }
 
   \item{summary.locat}{
-a Spatial*DataFrame object for providing summary locations, i.e. SpatialPointsDataFrame or SpatialPolygonsDataFrame as defined in package sp
+a Spatial*DataFrame object for providing summary locations, i.e. SpatialPointsDataFrame or SpatialPolygonsDataFrame as defined in package sp, or a sf object 
 
 }
 
@@ -43,6 +44,10 @@ boxcar: wgt=1 if dist < bw, wgt=0 otherwise
 if TRUE calculate an adaptive kernel where the bandwidth (bw) corresponds to the number of nearest neighbours (i.e. adaptive distance); default is FALSE, where a fixed kernel is found (bandwidth is a fixed distance)
 
 }
+  \item{bw}{
+Bandwidth size
+
+}
   \item{p}{
 the power of the Minkowski distance, default is 2, i.e. the Euclidean distance
 
@@ -59,7 +64,10 @@ if TRUE, great circle distances will be calculated
 a pre-specified distance matrix, it can be calculated by the function gw.dist
 
 }
+  \item{foreach}{
+Wether parallel computation is implemented or not.
 
+}
 
 }
 \details{
@@ -69,7 +77,7 @@ a pre-specified distance matrix, it can be calculated by the function gw.dist
 %%  ~Describe the value returned
 %%  If it is a LIST, use
   \item{SDF }{
-a SpatialPointsDataFrame (may be gridded) or SpatialPolygonsDataFrame object (see package “sp”) with local covariances, local correlations (Pearson's), local correlations (Spearman's),  p-values of local correlations (Pearson's), p-values of local correlations (Spearman's), local partial correlations (Pearson's), local partial correlations (Spearman's), p-values of local partial correlations (Pearson's), and p-values of local partial correlations (Spearman's).
+a SpatialPointsDataFrame (may be gridded) or SpatialPolygonsDataFrame object (see package “sp”) when input is Spatial*DataFrame or a sf class object when input is sf, with local covariances, local correlations (Pearson's), local correlations (Spearman's),  p-values of local correlations (Pearson's), p-values of local correlations (Spearman's), local partial correlations (Pearson's), local partial correlations (Spearman's), p-values of local partial correlations (Pearson's), and p-values of local partial correlations (Spearman's).
 }
   \item{vars}{
   Names of variables used for the calculation.

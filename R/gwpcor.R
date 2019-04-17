@@ -86,7 +86,7 @@ gwpcor <- function(sdata, summary.locat, vars, method = c("pearson", "spearman")
     }else if (is(sdata, "sf")) {
       
       summary.locat <- sdata #still sf class
-      sp.locat <- st_coordinates(sdata)
+      sp.locat <- st_coordinates(sdata)[,1:2]
       
     }
     
@@ -117,7 +117,7 @@ gwpcor <- function(sdata, summary.locat, vars, method = c("pearson", "spearman")
     
   }else if (is(sdata, "sf")) {
     
-    data <- data.frame(sdata) %>% dplyr::select(-geometry)
+    data <- data.frame(sdata) %>% dplyr::select(-geom)
     
   }
   

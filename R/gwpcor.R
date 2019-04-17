@@ -65,8 +65,9 @@ gwpcor <- function(sdata, summary.locat, vars, method = c("pearson", "spearman")
     
   }else if (is(sdata, "sf")) {
     
+    len <- length(sdata)
     #p4s <- st_crs(sdata)
-    dp.locat <- st_coordinates(sdata)
+    dp.locat <- st_coordinates(sdata)[,1:2]
     
   } else if (is(sdata, "data.frame") && (!missing(dMat))) {
     
@@ -100,7 +101,7 @@ gwpcor <- function(sdata, summary.locat, vars, method = c("pearson", "spearman")
       
     } else if (is(sdata, "sf")) {
       
-      sp.locat <- st_coordinates(sdata)
+      sp.locat <- st_coordinates(sdata)[,1:2]
       
     }  else {
       
@@ -117,7 +118,7 @@ gwpcor <- function(sdata, summary.locat, vars, method = c("pearson", "spearman")
     
   }else if (is(sdata, "sf")) {
     
-    data <- data.frame(sdata) %>% dplyr::select(-geom)
+    data <- data.frame(sdata)[,1:(len -1)]
     
   }
   

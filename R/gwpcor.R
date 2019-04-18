@@ -141,7 +141,7 @@ gwpcor <- function(sdata, summary.locat, vars, method = c("pearson", "spearman")
     DM.given <- T
     DM1.given <- T
     dim.dMat <- dim(dMat)
-    if (dim.dMat[1] != dp.n || dim.dMat[2] != ep.n)
+    if (dim.dMat[1] != dp.n || dim.dMat[2] != sp.n)
       stop("Dimensions of dMat are not correct")
   }
   

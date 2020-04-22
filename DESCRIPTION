@@ -1,11 +1,22 @@
-Package: gwpcor
+Package: GWpcor
 Type: Package
-Title: Geographically weighted partial correlation
-Version: 0.1.1
-Author: N. Tsutsumida and J. Percival
-Maintainer: N. Tsutsumida <naru@kais.kyoto-u.ac.jp>
-Description: This implements a geographically weighted partial correlation which is an extension from gwss function in the GWmodel.
+Title: Geographically Weighted Partial Correlation Coefficient
+Version: 0.1.2
+Authors@R: 
+    c(person(given = "Narumasa",
+             family = "Tsutsumida",
+             role = c("aut", "cre"),
+             email = "rsnaru.jp@gmail.com",
+             comment = c(ORCID = "0000-0002-6333-0301")),
+      person(given = "Joseph",
+             family = "Percival",
+             role = c("aut"),
+             email = "ipercival@gmail.com "))
+Description: Implements a geographically weighted partial correlation which is an extension from gwss function in the GWmodel (Percival and Tsutsumida, (2017) <doi: 10.1553/giscience2017_01_s36>).
 License: GPL (>=2)
 Encoding: UTF-8
 LazyData: true
-Imports: sp, GWmodel, corpcor, foreach, doParallel
+Language: en-US
+Depends: R (>= 3.5.0)
+Imports: methods, dplyr, sp, sf, GWmodel, corpcor, foreach, parallel, doParallel
+SystemRequirements: C++11, GDAL (>= 2.0.1), GEOS (>= 3.4.0), PROJ (>= 4.8.0)

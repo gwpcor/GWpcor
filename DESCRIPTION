@@ -11,8 +11,8 @@ Authors@R:
       person(given = "Joseph",
              family = "Percival",
              role = c("aut"),
-             email = "ipercival@gmail.com "))
-Description: Implements a geographically weighted partial correlation which is an extension from gwss function in the GWmodel (Percival and Tsutsumida, (2017) <doi: 10.1553/giscience2017_01_s36>).
+             email = "ipercival@gmail.com"))
+Description: Implements a geographically weighted partial correlation which is an extension from gwss() function in the 'GWmodel' package (Percival and Tsutsumida (2017) <doi:10.1553/giscience2017_01_s36>).
 License: GPL (>=2)
 Encoding: UTF-8
 LazyData: true

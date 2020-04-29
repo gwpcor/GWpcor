@@ -106,28 +106,18 @@ Tsutsumida N. and Percival J.
 #NOTE: This example only shows how to implement gwpcor using sample data (meuse) in sp package. 
 #Results do not suggest any meanings.
 
-\donttest{
-#import data from sp package, and create a SpatialPointsDataFrame
-data("meuse")
-coordinates(meuse) = ~x+y
-proj4string(meuse) <- CRS("+init=epsg:28992")
+#import data from sp package
+library(sp)
+library(sf)
+data(meuse, package = "sp") 
+meuse_sf <- st_as_sf(meuse, coords = c("x", "y"), crs = 28992)
 
-#implement gw partial correlation as an example
+#implement gwpcor as an example
 #the bandwidth is arbitrary.
-res <- gwpcor(sdata = meuse, vars = c("cadmium","copper", "zinc"),
+res <- gwpcor(sdata = meuse_sf, vars = c("cadmium","copper", "zinc"),
 method = "pearson", kernel = "bisquare",adaptive = TRUE, 
 bw = 50,longlat = FALSE, foreach = FALSE)
 
-#show results
-#GW-cor
-spplot(res$SDF, c("corr_cadmium.copper","corr_cadmium.zinc","corr_copper.zinc")) 
-# p-value maps of GW-cor
-spplot(res$SDF, c("corr_pval_cadmium.copper","corr_pval_cadmium.zinc","corr_pval_copper.zinc")) 
-#GW-pcor
-spplot(res$SDF, c("pcorr_cadmium.copper","pcorr_cadmium.zinc","pcorr_copper.zinc")) 
-# p-value maps of GW-pcor
-spplot(res$SDF, c("pcorr_pval_cadmium.copper","pcorr_pval_cadmium.zinc","pcorr_pval_copper.zinc")) 
-}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

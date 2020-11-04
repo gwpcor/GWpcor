@@ -62,7 +62,29 @@ gwpcor <-
     } else if (is(sdata, "sf")) {
       len <- length(sdata)
       #p4s <- st_crs(sdata)
-      dp.locat <- st_coordinates(sdata)[, 1:2]
+
+      ##geom or geometry
+       geom_name <- attr(sdata, "sf_column")
+       if(geom_name == "geom"){
+         sdata_geom = sdata$geom
+       } else if (geom_name == "geometry") {
+         sdata_geom = sdata$geometry
+       } else {
+          stop("Geometry of input data was not found")
+       }
+
+      # #get geometry type
+      # sdata_geometry_type <- st_geometry_type(sdata_geom)
+
+      # if(any(sdata_geometry_type == "MULTIPOLYGON")){
+      #   dp.locat  <- st_centroid(sdata_geom)
+      # }
+      
+      #dp.locat <- st_coordinates(sdata)[, 1:2]
+      sdata_geom_center  <- st_centroid(sdata_geom)
+      sdata_geom_center_x <- sapply(sdata_geom_center,"[[",1)
+      sdata_geom_center_y <- sapply(sdata_geom_center,"[[",2)
+      dp.locat <- cbind(sdata_geom_center_x, sdata_geom_center_y)
       
     } else if (is(sdata, "data.frame") && (!missing(dMat))) {
       sdata <- sdata
@@ -79,7 +101,7 @@ gwpcor <-
         
       } else if (is(sdata, "sf")) {
         summary.locat <- sdata #still sf class
-        sp.locat <- st_coordinates(sdata)[, 1:2]
+        sp.locat <- cbind(sdata_geom_center_x, sdata_geom_center_y)
         
       }
       
@@ -89,8 +111,22 @@ gwpcor <-
       if (is(summary.locat, "Spatial")) {
         sp.locat <- coordinates(summary.locat)
         
-      } else if (is(sdata, "sf")) {
-        sp.locat <- st_coordinates(sdata)[, 1:2]
+      } else if (is(summary.locat, "sf")) {
+              ##geom or geometry
+       slocat_geom_name <- attr(summary.locat, "sf_column")
+       if(slocat_geom_name == "geom"){
+         slocat_sdata_geom = summary.locat$geom
+       } else if (slocat_geom_name == "geometry") {
+         slocat_sdata_geom = summary.locat$geometry
+       } else {
+          stop("Geometry of summary.locat data was not found")
+       }
+       slocat_sdata_geom_center  <- st_centroid(slocat_sdata_geom)
+       slocat_sdata_geom_center_x <- sapply(slocat_sdata_geom_center,"[[",1)
+       slocat_sdata_geom_center_y <- sapply(slocat_sdata_geom_center,"[[",2)
+       sp.locat <- cbind(slocat_sdata_geom_center_x, slocat_sdata_geom_center_y)
+        #sp.locat <- st_coordinates(sdata)[, 1:2]
+
         
       }  else {
         warning(
@@ -106,7 +142,8 @@ gwpcor <-
       data <- as(sdata, "data.frame")
       
     } else if (is(sdata, "sf")) {
-      data <- data.frame(sdata)[, 1:(len - 1)]
+      #data <- data.frame(sdata)[, 1:(len - 1)]
+      data <- data.frame(sdata) %>% dplyr::select(-geom_name)
       
     }
     

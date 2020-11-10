@@ -50,20 +50,9 @@ if TRUE, an adaptive kernel where the bandwidth (bw) corresponds to the number o
 Bandwidth size. If adaptive kernel, bw should be the number of nearest neighbours. For fixed kernel, the Euclid distance.
 
 }
-  \item{p}{
-The power of the Minkowski distance, default is 2, i.e. the Euclidean distance.
 
-}
-  \item{theta}{
-An angle in radians to rotate the coordinate system, default is 0.
-
-}
-  \item{longlat}{
-If TRUE, the coordinate of sdata is longlat.
-
-}
   \item{dMat}{
-A pre-specified distance matrix, it can be calculated by the function gw.dist().
+A pre-specified distance matrix, it can be calculated by the function st_distance().
 
 }
   \item{foreach}{

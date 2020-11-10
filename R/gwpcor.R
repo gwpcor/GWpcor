@@ -1,14 +1,11 @@
 gwpcor <-
   function(sdata,
-           summary.locat,
+           res_dp,
            vars,
            method = c("pearson", "spearman"),
            kernel = "bisquare",
            adaptive = FALSE,
            bw,
-           p = 2,
-           theta = 0,
-           longlat = FALSE,
            dMat,
            foreach = FALSE) {
 
@@ -18,6 +15,24 @@ gwpcor <-
     `%!in%` <- function (x, y) {
       !(x %in% y)
     }
+    
+    ## only sf acceptable
+    dist_mat <- function(dp_sf, res_sf){  
+      if (missing(dp_sf) || !any(class(dp_sf) == "sf")) 
+        stop("Input data points should be sf format")
+      if (is.na(st_is_longlat(dp_sf)))
+        stop("Input data points should be projected")
+      if (missing(res_sf)) 
+        res_sf <- dp_sf
+      if (!any(class(res_sf) == "sf")) 
+        stop("Input resultant points should be sf format")
+      if (is.na(st_is_longlat(res_sf)))
+        stop("Input resultant points should be projected")
+      
+      st_d <- st_distance(sdata,sdata)
+      return(st_d)  
+    }
+    
     
     S_Rho <- function(x, y, w) {
       n <- length(w)
@@ -50,151 +65,77 @@ gwpcor <-
       stop("At least three variables are needed for partial correlation!")
     if (missing(bw) || bw <= 0)
       stop("Bandwidth is not specified correctly")
-    len.var <- length(vars)
+    len_var <- length(vars)
     
     if (length(vars) == 0)
       stop("Variables input doesn't match with data")
     
     if (is(sdata, "Spatial")) {
-      p4s <- proj4string(sdata)
-      dp.locat <- coordinates(sdata)
+      sdata <- st_as_sf(sdata)
       
     } else if (is(sdata, "sf")) {
-      len <- length(sdata)
-      #p4s <- st_crs(sdata)
+      
+    # nothing
+      
+    } else{
+      stop("Given data must be a Spatial*DataFrame or sf object")}
+    
+    if (missing(res_dp)) {
+      res_dp_given <- FALSE
+      res_dp <- sdata
+      } else {
+      
+        res_dp_given <- T
+      
+      if (is(res_dp, "Spatial")) {
+        res_dp <- st_as_sf(res_dp)
 
-      ##geom or geometry
-       geom_name <- attr(sdata, "sf_column")
-       if(geom_name == "geom"){
-         sdata_geom = sdata$geom
-       } else if (geom_name == "geometry") {
-         sdata_geom = sdata$geometry
+      } else if (is(res_dp, "sf")) {
+        ##nothing
        } else {
-          stop("Geometry of input data was not found")
+          stop("res_dp data should be sp or sf format")
        }
 
-      # #get geometry type
-      # sdata_geometry_type <- st_geometry_type(sdata_geom)
-
-      # if(any(sdata_geometry_type == "MULTIPOLYGON")){
-      #   dp.locat  <- st_centroid(sdata_geom)
-      # }
-      
-      #dp.locat <- st_coordinates(sdata)[, 1:2]
-      sdata_geom_center  <- st_centroid(sdata_geom)
-      sdata_geom_center_x <- sapply(sdata_geom_center,"[[",1)
-      sdata_geom_center_y <- sapply(sdata_geom_center,"[[",2)
-      dp.locat <- cbind(sdata_geom_center_x, sdata_geom_center_y)
-      
-    } else if (is(sdata, "data.frame") && (!missing(dMat))) {
-      sdata <- sdata
-      
-    } else
-      stop("Given data must be a Spatial*DataFrame or data.frame object")
-    
-    if (missing(summary.locat)) {
-      sp.given <- FALSE
-      
-      if (is(sdata, "Spatial")) {
-        summary.locat <- sdata
-        sp.locat <- coordinates(summary.locat)
-        
-      } else if (is(sdata, "sf")) {
-        summary.locat <- sdata #still sf class
-        sp.locat <- cbind(sdata_geom_center_x, sdata_geom_center_y)
-        
       }
+    
+    dp_n <- dim(sdata)[1]
+    res_dp_n <- dim(res_dp)[1]
+        
+    if (missing(dMat)) {
+      
+      dMat <- dist_mat(sdata, res_dp)
       
     } else {
-      sp.given <- T
-      
-      if (is(summary.locat, "Spatial")) {
-        sp.locat <- coordinates(summary.locat)
-        
-      } else if (is(summary.locat, "sf")) {
-              ##geom or geometry
-       slocat_geom_name <- attr(summary.locat, "sf_column")
-       if(slocat_geom_name == "geom"){
-         slocat_sdata_geom = summary.locat$geom
-       } else if (slocat_geom_name == "geometry") {
-         slocat_sdata_geom = summary.locat$geometry
-       } else {
-          stop("Geometry of summary.locat data was not found")
-       }
-       slocat_sdata_geom_center  <- st_centroid(slocat_sdata_geom)
-       slocat_sdata_geom_center_x <- sapply(slocat_sdata_geom_center,"[[",1)
-       slocat_sdata_geom_center_y <- sapply(slocat_sdata_geom_center,"[[",2)
-       sp.locat <- cbind(slocat_sdata_geom_center_x, slocat_sdata_geom_center_y)
-        #sp.locat <- st_coordinates(sdata)[, 1:2]
 
-        
-      }  else {
-        warning(
-          "Output loactions are not packed in a Spatial object, and it has to be a two-column numeric vector"
-        )
-        summary.locat <- sp.locat
-        
-      }
+      dim.dMat <- dim(dMat)
+      if (dim.dMat[1] != dp_n || dim.dMat[2] != res_dp_n)
+        stop("Dimensions of dMat are not correct")
     }
     
     ##data extraction
     if (is(sdata, "Spatial")) {
-      data <- as(sdata, "data.frame")
-      
+      x <- as(sdata, "data.frame") %>% 
+        dplyr::select(vars) %>% 
+        as.matrix()
     } else if (is(sdata, "sf")) {
-      #data <- data.frame(sdata)[, 1:(len - 1)]
-      data <- data.frame(sdata) %>% dplyr::select(-geom_name)
-      
+      geom_name <- attr(sdata, "sf_column")
+      x <- data.frame(sdata) %>% 
+        dplyr::select(-geom_name) %>% 
+        dplyr::select(vars) %>% 
+        as.matrix()
     }
-    
-    dp.n <- nrow(data)
-    sp.n <- nrow(sp.locat)
-    
-    if (missing(dMat)) {
-      DM.given <- FALSE
-      DM1.given <- FALSE
       
-      if (sp.given) {
-        dMat <-
-          gw.dist(
-            dp.locat = dp.locat,
-            rp.locat = sp.locat,
-            p = p,
-            theta = theta,
-            longlat = longlat
-          )
-      } else {
-        dMat <-
-          gw.dist(
-            dp.locat = dp.locat,
-            p = p,
-            theta = theta,
-            longlat = longlat
-          )
-      }
-      
-      DM.given <- TRUE
-      
-    } else {
-      DM.given <- TRUE
-      DM1.given <- TRUE
-      dim.dMat <- dim(dMat)
-      if (dim.dMat[1] != dp.n || dim.dMat[2] != sp.n)
-        stop("Dimensions of dMat are not correct")
-    }
+    var_n <- ncol(x)
     
-    x <- data %>% dplyr::select(vars) %>% as.matrix()
-    var.n <- ncol(x)
-    
-    if (data %>% dplyr::select(vars) %>% anyNA())
+    if (x %>% anyNA())
       stop(" NA values are not allowed")
-    if (len.var > var.n)
+    if (len_var > var_n)
       warning("Invalid variables have been specified, please check them again!")
     if (method %!in% c("pearson", "spearman")) {
       stop("The method option should be 'pearson' or 'spearman'.")
     }
     
-    name.comb.df <- expand.grid(vars[1:(len.var - 1)], vars[2:len.var])
+    name.comb.df <- expand.grid(vars[1:(len_var - 1)], vars[2:len_var])
     name.comb_which <-
       apply(name.comb.df, 1, function(x) {
         (x[1] != x[2])
@@ -210,7 +151,7 @@ gwpcor <-
       cl <- makeCluster(detectCores() - 1)
       registerDoParallel(cl)
       
-      foreach_out <- foreach(i = 1:sp.n) %dopar% {
+      foreach_out <- foreach(i = 1:res_dp_n) %dopar% {
         
         dist.vi <- dMat[, i] #distance from i
         
@@ -339,25 +280,25 @@ gwpcor <-
       #non-parallel
       
       if (method == "pearson") {
-        cov.mat <- matrix(NA, nrow = sp.n, ncol = sum(1:(var.n - 1)))
-        corr.mat <- matrix(NA, nrow = sp.n, ncol = sum(1:(var.n - 1)))
+        cov.mat <- matrix(NA, nrow = res_dp_n, ncol = sum(1:(var_n - 1)))
+        corr.mat <- matrix(NA, nrow = res_dp_n, ncol = sum(1:(var_n - 1)))
         corr.pval.mat <-
-          matrix(NA, nrow = sp.n, ncol = sum(1:(var.n - 1)))
-        pcorr.mat <- matrix(NA, nrow = sp.n, ncol = sum(1:(var.n - 1)))
+          matrix(NA, nrow = res_dp_n, ncol = sum(1:(var_n - 1)))
+        pcorr.mat <- matrix(NA, nrow = res_dp_n, ncol = sum(1:(var_n - 1)))
         pcorr.pval.mat <-
-          matrix(NA, nrow = sp.n, ncol = sum(1:(var.n - 1)))
+          matrix(NA, nrow = res_dp_n, ncol = sum(1:(var_n - 1)))
         
       } else if (method == "spearman") {
-        s.cov.mat <- matrix(NA, nrow = sp.n, ncol = sum(1:(var.n - 1)))
-        s.corr.mat <- matrix(NA, nrow = sp.n, ncol = sum(1:(var.n - 1)))
+        s.cov.mat <- matrix(NA, nrow = res_dp_n, ncol = sum(1:(var_n - 1)))
+        s.corr.mat <- matrix(NA, nrow = res_dp_n, ncol = sum(1:(var_n - 1)))
         s.corr.pval.mat <-
-          matrix(NA, nrow = sp.n, ncol = sum(1:(var.n - 1)))
-        s.pcorr.mat <- matrix(NA, nrow = sp.n, ncol = sum(1:(var.n - 1)))
+          matrix(NA, nrow = res_dp_n, ncol = sum(1:(var_n - 1)))
+        s.pcorr.mat <- matrix(NA, nrow = res_dp_n, ncol = sum(1:(var_n - 1)))
         s.pcorr.pval.mat <-
-          matrix(NA, nrow = sp.n, ncol = sum(1:(var.n - 1)))
+          matrix(NA, nrow = res_dp_n, ncol = sum(1:(var_n - 1)))
       }
       
-      for (i in 1:sp.n) {
+      for (i in 1:res_dp_n) {
         dist.vi <- dMat[, i] #distance from i
         
         W.i <- gw.weight(dist.vi, bw, kernel, adaptive)
@@ -437,43 +378,15 @@ gwpcor <-
     }
     
     
-    rownames(res.df) <- rownames(sp.locat)
+    rownames(res.df) <- rownames(res_dp)
     griddedObj <- FALSE
     
-    if (is(summary.locat, "Spatial")) {
-      if (is(summary.locat, "SpatialPolygonsDataFrame")) {
-        polygons <- polygons(summary.locat)
-        SDF <- SpatialPolygonsDataFrame(Sr = polygons,
-                                        data = res.df,
-                                        match.ID = FALSE)
-      }
-      else {
-        griddedObj <- gridded(summary.locat)
-        SDF <- SpatialPointsDataFrame(
-          coords = sp.locat,
-          data = res.df,
-          proj4string = CRS(p4s),
-          match.ID = FALSE
-        )
-        gridded(SDF) <- griddedObj
-      }
-      
-      
-    } else if (is(summary.locat, "sf")) {
-      empty_sf <-
-        st_sf(id = 1:nrow(summary.locat),
-              geometry = st_sfc(st_geometry(summary.locat)))
-      SDF <-
-        merge(empty_sf, res.df %>% dplyr::mutate(id = rownames(res.df)))
-    } else {
-      SDF <- SpatialPointsDataFrame(
-        coords = sp.locat,
-        data = res.df,
-        proj4string = CRS(p4s),
-        match.ID = FALSE
-      )
-    }
-    
+    empty_sf <-
+      st_sf(id = 1:nrow(res_dp),
+            geometry = st_sfc(st_geometry(res_dp)))
+    SDF <-
+      merge(empty_sf, res.df %>% dplyr::mutate(id = rownames(res.df)))
+
     res <-
       list(
         SDF = SDF,

@@ -9,7 +9,8 @@ This function calculates the geographically weighted correlation and partial cor
 }
 \usage{
 gwpcor(sdata, res_dp, vars, method = c("pearson", "spearman"), 
-kernel = "bisquare", adaptive = FALSE, bw, dMat, foreach = FALSE)
+kernel = "bisquare", adaptive = FALSE, bw, dMat, 
+geodisic_measure = "cheap", foreach = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -53,6 +54,9 @@ Bandwidth size. If adaptive kernel, bw should be the proportion of the number of
   \item{dMat}{
 A pre-specified distance matrix, it can be calculated by the function st_distance().
 
+}
+  \item{geodisic_measure}{
+geodisic_measure is used when latlon coordinate. The distance is cauclated by geodist::geodist(). One of "haversine" "vincenty", "geodesic", or "cheap" specifying desired method of geodesic distance calculation. "Cheap" is the fastest way but may have errors if the ROI is large.
 }
   \item{foreach}{
 Whether parallel computation is implemented or not.
@@ -104,7 +108,7 @@ meuse_sf <- st_as_sf(meuse, coords = c("x", "y"), crs = 28992)
 #the bandwidth is arbitrary.
 res <- gwpcor(sdata = meuse_sf, vars = c("cadmium","copper", "zinc"),
 method = "pearson", kernel = "bisquare",adaptive = TRUE, 
-bw = 0.25, foreach = FALSE)
+bw = 0.25, geodisic_measure = "cheap", foreach = FALSE)
 
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

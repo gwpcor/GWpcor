@@ -7,6 +7,7 @@ gwpcor <-
            adaptive = FALSE,
            bw,
            dMat,
+           geodisic_measure = "cheap",
            foreach = FALSE) {
 
     `%+%` <- function (x, y) {
@@ -29,12 +30,14 @@ gwpcor <-
       if (is.na(st_is_longlat(res_sf)))
         stop("Input resultant points should be projected")
       
+      dp_locat <- st_coordinates(st_centroid(sdata))
+      res_locat <-  st_coordinates(st_centroid(res_sf))
+      
       if (isTRUE(st_is_longlat(sdata))){
-        dp_locat <- st_coordinates(st_centroid(sdata))
-        res_locat <-  st_coordinates(st_centroid(res_sf))
-        res_dist <- geodist(dp_locat, res_locat, measure = "cheap") #the mapbox 'cheap' ruler
+        res_dist <- geodist(dp_locat, res_locat, measure = geodisic_measure) #the mapbox 'cheap' ruler
       }else{
-        res_dist <- st_distance(sdata, res_sf) #slow when latlon
+        #res_dist <- st_distance(sdata, res_sf) #slow...
+        res_dist <- distmat(dp_locat, res_locat) 
       }
 
       return(res_dist)  

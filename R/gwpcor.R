@@ -7,6 +7,7 @@ gwpcor <-
            adaptive = FALSE,
            bw,
            dMat,
+           geodisic_measure = "cheap",
            foreach = FALSE) {
 
     `%+%` <- function (x, y) {
@@ -29,10 +30,55 @@ gwpcor <-
       if (is.na(st_is_longlat(res_sf)))
         stop("Input resultant points should be projected")
       
-      st_d <- st_distance(sdata,sdata)
-      return(st_d)  
+      dp_locat <- st_coordinates(st_centroid(sdata))
+      res_locat <-  st_coordinates(st_centroid(res_sf))
+      
+      if (isTRUE(st_is_longlat(sdata))){
+        res_dist <- geodist(dp_locat, res_locat, measure = geodisic_measure) #the mapbox 'cheap' ruler
+      }else{
+        #res_dist <- st_distance(sdata, res_sf) #slow...
+        res_dist <- distmat(dp_locat, res_locat) 
+      }
+
+      return(res_dist)  
     }
     
+    weight_func <- function(type, adapt, dist_vec, bw ){
+      
+      dist_vec <- as.double(dist_vec)
+      
+      if(adapt){
+        bw_size <- as.integer(length(dist_vec) * bw)
+        bw_dist <- as.double(sort(dist_vec)[bw_size])
+        
+        if(type=="gaussian"){
+          weight <- exp((-0.5) * ((dist_vec^2)/(bw_dist^2)))
+        }else if(type=="exponential"){
+          weight <- exp((-1) * dist_vec/bw_dist)
+        }else if(type=="bisquare"){
+          weight <-  ifelse((dist_vec > bw_dist), 0 , (1 - (dist_vec^2/bw_dist^2))^2)
+        }else if(type=="tricube"){
+          weight <-  ifelse((dist_vec > bw_dist), 0 , (1 - (dist_vec^3/bw_dist^3))^3)
+        }else if(type=="boxcar"){
+          weight <-  ifelse((dist_vec > bw_dist), 0 , 1)
+        }
+        
+      } else{ ##fixed kernel
+        if(type=="gaussian"){
+          weight <- exp((-0.5) * ((dist_vec^2)/(bw^2)))
+        }else if(type=="exponential"){
+          weight <- exp((-1) * dist_vec/bw)
+        }else if(type=="bisquare"){
+          weight <-  ifelse((dist_vec > bw), 0 , (1 - (dist_vec^2/bw^2))^2)
+        }else if(type=="tricube"){
+          weight <-  ifelse((dist_vec > bw), 0 , (1 - (dist_vec^3/bw^3))^3)
+        }else if(type=="boxcar"){
+          weight <-  ifelse((dist_vec > bw), 0 , 1)
+        }
+        
+      }  
+      return (weight) 
+    }
     
     S_Rho <- function(x, y, w) {
       n <- length(w)
@@ -81,21 +127,22 @@ gwpcor <-
       stop("Given data must be a Spatial*DataFrame or sf object")}
     
     if (missing(res_dp)) {
-      res_dp_given <- FALSE
-      res_dp <- sdata
-      } else {
-      
-        res_dp_given <- T
-      
-      if (is(res_dp, "Spatial")) {
-        res_dp <- st_as_sf(res_dp)
-
-      } else if (is(res_dp, "sf")) {
-        ##nothing
+        res_dp_given <- FALSE
+        res_dp <- sdata
        } else {
-          stop("res_dp data should be sp or sf format")
-       }
-
+        res_dp_given <- T
+        if (is(res_dp, "Spatial")) {
+          res_dp <- st_as_sf(res_dp)
+  
+        } else if (is(res_dp, "sf")) {
+          ##nothing
+         } else {
+            stop("res_dp data should be sp or sf format")
+         }
+        
+        if (st_crs(sdata)$proj4string != st_crs(res_dp)$proj4string){
+          stop("coordination is not the same.")
+        }
       }
     
     dp_n <- dim(sdata)[1]
@@ -155,7 +202,8 @@ gwpcor <-
         
         dist.vi <- dMat[, i] #distance from i
         
-        W.i <- GWmodel::gw.weight(dist.vi, bw, kernel, adaptive)
+        #W.i <- GWmodel::gw.weight(dist.vi, bw, kernel, adaptive)
+        W.i <- weight_func(type = kernel, adapt = adaptive, dist_vec =dist.vi, bw =bw)
         sum.w <- sum(W.i)
         Wi <- c(W.i / sum.w)
         
@@ -301,7 +349,8 @@ gwpcor <-
       for (i in 1:res_dp_n) {
         dist.vi <- dMat[, i] #distance from i
         
-        W.i <- gw.weight(dist.vi, bw, kernel, adaptive)
+        #W.i <- gw.weight(dist.vi, bw, kernel, adaptive)
+        W.i <- weight_func(type = kernel, adapt = adaptive, dist_vec =dist.vi, bw =bw)
         sum.w <- sum(W.i)
         Wi <- c(W.i / sum.w)
         

@@ -8,9 +8,9 @@ Geographically Weighted Correlation and Partial Correlation
 This function calculates the geographically weighted correlation and partial correlation between two variables given others. The function is designed by the gwss function from the GWmodel package, and the cor2pcor function from the corpcor package.
 }
 \usage{
-gwpcor(sdata, summary.locat, vars, method = c("pearson", "spearman"), 
-kernel = "bisquare", adaptive = FALSE, bw, 
-p = 2, theta = 0, longlat = FALSE, dMat, foreach = FALSE)
+gwpcor(sdata, res_dp, vars, method = c("pearson", "spearman"), 
+kernel = "bisquare", adaptive = FALSE, bw, dMat, 
+geodisic_measure = "cheap", foreach = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -20,7 +20,7 @@ or a sf object.
 
 }
 
-  \item{summary.locat}{
+  \item{res_dp}{
 A Spatial*DataFrame object for providing summary locations, i.e. SpatialPointsDataFrame or SpatialPolygonsDataFrame as defined in package sp, or a sf object. 
 
 }
@@ -43,28 +43,20 @@ boxcar: wgt = 1 if dist < bw, wgt = 0 otherwise
 
 }
   \item{adaptive}{
-if TRUE, an adaptive kernel where the bandwidth (bw) corresponds to the number of nearest neighbours (i.e. adaptive distance) is employed. The default is FALSE, where a fixed kernel is employed (bandwidth is a fixed distance).
+if TRUE, an adaptive kernel where the bandwidth (bw) corresponds to the proportion of the number of nearest neighbours (i.e. adaptive distance) is employed. The default is FALSE, where a fixed kernel is employed (bandwidth is a fixed distance).
 
 }
   \item{bw}{
-Bandwidth size. If adaptive kernel, bw should be the number of nearest neighbours. For fixed kernel, the Euclid distance.
+Bandwidth size. If adaptive kernel, bw should be the proportion of the number of nearest neighbours (0 < bw <=1). For fixed kernel, the Euclid distance.
 
 }
-  \item{p}{
-The power of the Minkowski distance, default is 2, i.e. the Euclidean distance.
 
-}
-  \item{theta}{
-An angle in radians to rotate the coordinate system, default is 0.
-
-}
-  \item{longlat}{
-If TRUE, the coordinate of sdata is longlat.
-
-}
   \item{dMat}{
-A pre-specified distance matrix, it can be calculated by the function gw.dist().
+A pre-specified distance matrix, it can be calculated by the function st_distance().
 
+}
+  \item{geodisic_measure}{
+geodisic_measure is used when latlon coordinate. The distance is cauclated by geodist::geodist(). One of "haversine" "vincenty", "geodesic", or "cheap" specifying desired method of geodesic distance calculation. "Cheap" is the fastest way but may have errors if the ROI is large.
 }
   \item{foreach}{
 Whether parallel computation is implemented or not.
@@ -116,7 +108,7 @@ meuse_sf <- st_as_sf(meuse, coords = c("x", "y"), crs = 28992)
 #the bandwidth is arbitrary.
 res <- gwpcor(sdata = meuse_sf, vars = c("cadmium","copper", "zinc"),
 method = "pearson", kernel = "bisquare",adaptive = TRUE, 
-bw = 50,longlat = FALSE, foreach = FALSE)
+bw = 0.25, geodisic_measure = "cheap", foreach = FALSE)
 
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

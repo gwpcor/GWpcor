@@ -29,8 +29,15 @@ gwpcor <-
       if (is.na(st_is_longlat(res_sf)))
         stop("Input resultant points should be projected")
       
-      st_d <- st_distance(sdata,sdata)
-      return(st_d)  
+      if (isTRUE(st_is_longlat(sdata))){
+        dp_locat <- st_coordinates(st_centroid(sdata))
+        res_locat <-  st_coordinates(st_centroid(res_sf))
+        res_dist <- geodist(dp_locat, res_locat, measure = "cheap") #the mapbox 'cheap' ruler
+      }else{
+        res_dist <- st_distance(sdata, res_sf) #slow when latlon
+      }
+
+      return(res_dist)  
     }
     
     weight_func <- function(type, adapt, dist_vec, bw ){
@@ -117,21 +124,22 @@ gwpcor <-
       stop("Given data must be a Spatial*DataFrame or sf object")}
     
     if (missing(res_dp)) {
-      res_dp_given <- FALSE
-      res_dp <- sdata
-      } else {
-      
-        res_dp_given <- T
-      
-      if (is(res_dp, "Spatial")) {
-        res_dp <- st_as_sf(res_dp)
-
-      } else if (is(res_dp, "sf")) {
-        ##nothing
+        res_dp_given <- FALSE
+        res_dp <- sdata
        } else {
-          stop("res_dp data should be sp or sf format")
-       }
-
+        res_dp_given <- T
+        if (is(res_dp, "Spatial")) {
+          res_dp <- st_as_sf(res_dp)
+  
+        } else if (is(res_dp, "sf")) {
+          ##nothing
+         } else {
+            stop("res_dp data should be sp or sf format")
+         }
+        
+        if (st_crs(sdata)$proj4string != st_crs(res_dp)$proj4string){
+          stop("coordination is not the same.")
+        }
       }
     
     dp_n <- dim(sdata)[1]

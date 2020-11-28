@@ -145,7 +145,7 @@ gwpcor <-
         }
       }
     
-    if(adaptive && ((bw < 0) || (bw >1))){
+    if(adaptive && ((bw <= 0) || (bw >1))){
       stop("adaptive kernel should be between 0 and 1")
     }
     

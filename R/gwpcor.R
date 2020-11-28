@@ -145,6 +145,10 @@ gwpcor <-
         }
       }
     
+    if(adaptive && ((bw < 0) || (bw >1))){
+      stop("adaptive kernel should be between 0 and 1")
+    }
+    
     dp_n <- dim(sdata)[1]
     res_dp_n <- dim(res_dp)[1]
         

@@ -186,16 +186,18 @@ gwpcor <-
       stop("The method option should be 'pearson' or 'spearman'.")
     }
     
-    name.comb.df <- expand.grid(vars[1:(len_var - 1)], vars[2:len_var])
-    name.comb_which <-
-      apply(name.comb.df, 1, function(x) {
-        (x[1] != x[2])
-      })
-    name.comb <-
-      apply(name.comb.df[name.comb_which, ], 1, function(x) {
-        x[1] %+% "." %+% x[2]
-      }) %>%
-      as.vector()
+    
+    if (len_var > 1) {
+      name.comb <- c()
+      n <- 1
+      for (i in 1:(len_var - 1)) {
+        for (j in (i + 1):len_var) {
+          name.comb[n] <- vars[i] %+% "." %+% vars[j]
+          n <- n+1
+        }
+      }
+    }
+    
  
     if (foreach == TRUE) {
       

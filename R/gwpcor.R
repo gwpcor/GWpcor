@@ -1,4 +1,4 @@
-gwpcor <-
+gwpcor2 <-
   function(sdata,
            res_dp,
            vars,
@@ -437,7 +437,7 @@ gwpcor <-
     griddedObj <- FALSE
     
     empty_sf <-
-      st_sf(id = 1:nrow(res_dp),
+      st_sf(id = rownames(res_dp),
             geometry = st_sfc(st_geometry(res_dp)))
     SDF <-
       merge(empty_sf, res.df %>% dplyr::mutate(id = rownames(res.df)))

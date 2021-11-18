@@ -2,7 +2,7 @@
 This is a R package for implementing a geographically weighted partial correlation via a gwpcor function. This is an addon function of GW model.
 
 ## install
-devtools::install_github("naru-T/GWpcor")
+devtools::install_github("gwpcor/GWpcor")
 or
 install.packages("GWpcor")
 

@@ -1,4 +1,4 @@
-gwpcor2 <-
+gwpcor <-
   function(sdata,
            res_dp,
            vars,

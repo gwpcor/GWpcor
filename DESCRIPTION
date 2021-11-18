@@ -1,7 +1,7 @@
 Package: GWpcor
 Type: Package
 Title: Geographically Weighted Partial Correlation Coefficient
-Version: 0.1.6
+Version: 0.1.7
 Authors@R: 
     c(person(given = "Narumasa",
              family = "Tsutsumida",
